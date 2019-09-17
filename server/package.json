@@ -1,0 +1,26 @@
+{
+  "name": "FaktoryJobs",
+  "version": "1.0.0",
+  "description": "A demonstration of using Faktory to handle background jobs.",
+  "main": "index.js",
+  "scripts": {
+    "production-faktory": "docker run --rm -it -v faktory-data:/var/lib/faktory -e \"FAKTORY_PASSWORD=some_password\" -p 127.0.0.1:7419:7419 -p 127.0.0.1:7420:7420 contribsys/faktory:latest /faktory -b :7419 -w :7420 -e production",
+    "faktory": "docker run --rm -it -p 127.0.0.1:7419:7419 -p 127.0.0.1:7420:7420 contribsys/faktory:latest",
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AsWeMayThink/FaktoryJobs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AsWeMayThink/FaktoryJobs/issues"
+  },
+  "homepage": "https://github.com/AsWeMayThink/FaktoryJobs#readme",
+  "dependencies": {
+    "cron": "^1.7.2",
+    "faktory-worker": "^3.1.0"
+  }
+}
