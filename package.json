@@ -21,6 +21,8 @@
   "homepage": "https://github.com/AsWeMayThink/FaktoryJobs#readme",
   "dependencies": {
     "cron": "^1.7.2",
-    "faktory-worker": "^3.1.0"
+    "faktory-worker": "^3.1.0",
+    "natural": "^0.6.3",
+    "x-ray": "^2.3.4"
   }
 }

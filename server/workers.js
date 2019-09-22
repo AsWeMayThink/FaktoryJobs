@@ -1,50 +1,59 @@
 const faktory = require('faktory-worker');
 
-const triggerIftttMakerWebhook = require('./models/makerWebhook');
+const scrapers = require('./scrapers');
 
-const SEND_NOTIFICATION = 'send-notification';
-const UPDATE_GEEKLIST = 'update-geeklist';
+const UPDATE_PRODUCT = 'update-product';
+const UPDATE_PRODUCTS = 'update-products';
 
-async function sendNotificationWorker(event, key, value1, value2, value3) {
-  await triggerIftttMakerWebhook(event, key, value1, value2, value3);
+async function updateProductJob(product, asin) {
+  const client = await faktory.connect();
+
+  await client
+    .job(UPDATE_PRODUCT, {
+      product,
+      asin
+    })
+    .push();
+
+  await client.close();
 }
 
-// Try up to three times to get the geeklist. It often seems like the first call fails and then another call
-// immediately after will succeed. This tries to hide those retries, which are different from what Faktory
-// facilitates.
-async function getGeeklistWithRetriesWorker(geeklistId, page) {
-  let bggGeeklist = await bgg.getGeeklist(geeklistId, page);
+async function updateProductWorker({ product, asin }) {
+  // Update each product at a variety of sites which sell games.
+  // Note: Each of these could easily be a separate job which this job
+  // generates (and probably should be).
 
-  if (
-    bggGeeklist.message &&
-    bggGeeklist.message.includes('Please try again later for access.')
-  ) {
-    bggGeeklist = await bgg.getGeeklist(geeklistId, page);
-  } else {
-    return bggGeeklist;
-  }
+  // Amazon.com
+  let amazonProduct = await scrapers.getProductOnAmazon(product, asin);
 
-  if (
-    bggGeeklist.message &&
-    bggGeeklist.message.includes('Please try again later for access.')
-  ) {
-    bggGeeklist = await bgg.getGeeklist(geeklistId, page);
-  }
+  // CardHaus
+  let cardhausProduct = await scrapers.getProductOnCardhaus(product, asin);
 
-  return bggGeeklist;
+  // CoolStuffInc
+  let coolstuffProduct = await scrapers.getProductOnCoolStuffInc(product, asin);
+
+  console.log(amazonProduct, cardhausProduct, coolstuffProduct);
+}
+
+async function updateProductsWorker() {
+  // Get a list of all the products we're monitoring at the moment and update
+  // each one.
+  updateProductJob('machi koro legacy', 'B07MJM6D6Z');
 }
 
 async function registerWorkers() {
   // Register a worker for each job type you plan to have.
-  faktory.register(SEND_NOTIFICATION, sendNotificationWorker);
-  faktory.register(UPDATE_GEEKLIST, updateGeeklistWorker);
+  faktory.register(UPDATE_PRODUCT, updateProductWorker);
+  faktory.register(UPDATE_PRODUCTS, updateProductsWorker);
 
   console.log('Waiting for work...');
   await faktory.work();
 }
 
+registerWorkers();
+
 module.exports = {
-  SEND_NOTIFICATION,
-  UPDATE_GEEKLIST,
+  UPDATE_PRODUCT,
+  UPDATE_PRODUCTS,
   registerWorkers
 };
